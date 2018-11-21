@@ -139,9 +139,15 @@ void DrawEngineVulkan::InitDeviceObjects() {
 	VkDevice device = vulkan_->GetDevice();
 
 	VkDescriptorSetLayoutCreateInfo dsl{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
-	dsl.bindingCount = ARRAY_SIZE(bindings);
+	dsl.bindingCount = 6;  // Skip the storage buffers
 	dsl.pBindings = bindings;
 	VkResult res = vkCreateDescriptorSetLayout(device, &dsl, nullptr, &descriptorSetLayout_);
+	assert(VK_SUCCESS == res);
+
+	VkDescriptorSetLayoutCreateInfo dslTess{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+	dslTess.bindingCount = ARRAY_SIZE(bindings);
+	dslTess.pBindings = bindings;
+	res = vkCreateDescriptorSetLayout(device, &dslTess, nullptr, &descriptorSetLayoutTess_);
 	assert(VK_SUCCESS == res);
 
 	// We are going to use one-shot descriptors in the initial implementation. Might look into caching them
@@ -160,6 +166,15 @@ void DrawEngineVulkan::InitDeviceObjects() {
 	pl.pSetLayouts = &descriptorSetLayout_;
 	pl.flags = 0;
 	res = vkCreatePipelineLayout(device, &pl, nullptr, &pipelineLayout_);
+	assert(VK_SUCCESS == res);
+
+	VkPipelineLayoutCreateInfo plTess{ VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
+	plTess.pPushConstantRanges = nullptr;
+	plTess.pushConstantRangeCount = 0;
+	plTess.setLayoutCount = 1;
+	plTess.pSetLayouts = &descriptorSetLayoutTess_;
+	plTess.flags = 0;
+	res = vkCreatePipelineLayout(device, &plTess, nullptr, &pipelineLayoutTess_);
 	assert(VK_SUCCESS == res);
 
 	VkSamplerCreateInfo samp{ VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
@@ -222,8 +237,12 @@ void DrawEngineVulkan::DestroyDeviceObjects() {
 		vulkan_->Delete().QueueDeleteSampler(nullSampler_);
 	if (pipelineLayout_ != VK_NULL_HANDLE)
 		vulkan_->Delete().QueueDeletePipelineLayout(pipelineLayout_);
+	if (pipelineLayoutTess_ != VK_NULL_HANDLE)
+		vulkan_->Delete().QueueDeletePipelineLayout(pipelineLayoutTess_);
 	if (descriptorSetLayout_ != VK_NULL_HANDLE)
 		vulkan_->Delete().QueueDeleteDescriptorSetLayout(descriptorSetLayout_);
+	if (descriptorSetLayoutTess_ != VK_NULL_HANDLE)
+		vulkan_->Delete().QueueDeleteDescriptorSetLayout(descriptorSetLayoutTess_);
 	if (vertexCache_) {
 		vertexCache_->Destroy(vulkan_);
 		delete vertexCache_;
@@ -401,7 +420,7 @@ VkDescriptorSet DrawEngineVulkan::GetOrCreateDescriptorSet(VkImageView imageView
 	VkDescriptorSet desc;
 	VkDescriptorSetAllocateInfo descAlloc{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
 	descAlloc.pNext = nullptr;
-	descAlloc.pSetLayouts = &descriptorSetLayout_;
+	descAlloc.pSetLayouts = tess ? &descriptorSetLayoutTess_ : &descriptorSetLayout_;
 	descAlloc.descriptorPool = frame.descPool;
 	descAlloc.descriptorSetCount = 1;
 	VkResult result = vkAllocateDescriptorSets(vulkan_->GetDevice(), &descAlloc, &desc);
@@ -804,7 +823,7 @@ void DrawEngineVulkan::DoFlush() {
 			}
 			Draw::NativeObject object = g_Config.iRenderingMode != FB_NON_BUFFERED_MODE ? Draw::NativeObject::FRAMEBUFFER_RENDERPASS : Draw::NativeObject::BACKBUFFER_RENDERPASS;
 			VkRenderPass renderPass = (VkRenderPass)draw_->GetNativeObject(object);
-			VulkanPipeline *pipeline = pipelineManager_->GetOrCreatePipeline(pipelineLayout_, renderPass, pipelineKey_, &dec_->decFmt, vshader, fshader, true);
+			VulkanPipeline *pipeline = pipelineManager_->GetOrCreatePipeline(tess ? pipelineLayoutTess_ : pipelineLayout_, renderPass, pipelineKey_, &dec_->decFmt, vshader, fshader, true);
 			if (!pipeline || !pipeline->pipeline) {
 				// Already logged, let's bail out.
 				return;
@@ -843,9 +862,9 @@ void DrawEngineVulkan::DoFlush() {
 		if (useElements) {
 			if (!ibuf)
 				ibOffset = (uint32_t)frame->pushIndex->Push(decIndex, sizeof(uint16_t) * indexGen.VertexCount(), &ibuf);
-			renderManager->DrawIndexed(pipelineLayout_, ds, ARRAY_SIZE(dynamicUBOOffsets), dynamicUBOOffsets, vbuf, vbOffset, ibuf, ibOffset, vertexCount, 1, VK_INDEX_TYPE_UINT16);
+			renderManager->DrawIndexed(tess ? pipelineLayoutTess_ : pipelineLayout_, ds, ARRAY_SIZE(dynamicUBOOffsets), dynamicUBOOffsets, vbuf, vbOffset, ibuf, ibOffset, vertexCount, 1, VK_INDEX_TYPE_UINT16);
 		} else {
-			renderManager->Draw(pipelineLayout_, ds, ARRAY_SIZE(dynamicUBOOffsets), dynamicUBOOffsets, vbuf, vbOffset, vertexCount);
+			renderManager->Draw(tess ? pipelineLayoutTess_ : pipelineLayout_, ds, ARRAY_SIZE(dynamicUBOOffsets), dynamicUBOOffsets, vbuf, vbOffset, vertexCount);
 		}
 		}
 	} else {

@@ -656,7 +656,7 @@ void PipelineManagerVulkan::SaveCache(FILE *file, bool saveRawPipelineCache, Sha
 	}
 }
 
-bool PipelineManagerVulkan::LoadCache(FILE *file, bool loadRawPipelineCache, ShaderManagerVulkan *shaderManager, Draw::DrawContext *drawContext, VkPipelineLayout layout) {
+bool PipelineManagerVulkan::LoadCache(FILE *file, bool loadRawPipelineCache, ShaderManagerVulkan *shaderManager, Draw::DrawContext *drawContext, VkPipelineLayout layout, VkPipelineLayout layoutTess) {
 	VulkanRenderManager *rm = (VulkanRenderManager *)drawContext->GetNativeObject(Draw::NativeObject::RENDER_MANAGER);
 	VulkanQueueRunner *queueRunner = rm->GetQueueRunner();
 
@@ -735,7 +735,8 @@ bool PipelineManagerVulkan::LoadCache(FILE *file, bool loadRawPipelineCache, Sha
 
 		DecVtxFormat fmt;
 		fmt.InitializeFromID(key.vtxFmtId);
-		GetOrCreatePipeline(layout, rp, key.raster,
+		bool tess = key.vShaderID.Bit(VS_BIT_SPLINE) || key.vShaderID.Bit(VS_BIT_BEZIER);
+		GetOrCreatePipeline(tess ? layoutTess : layout, rp, key.raster,
 			key.useHWTransform ? &fmt : 0,
 			vs, fs, key.useHWTransform);
 	}

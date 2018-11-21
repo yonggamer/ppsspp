@@ -174,6 +174,9 @@ public:
 	VkPipelineLayout GetPipelineLayout() const {
 		return pipelineLayout_;
 	}
+	VkPipelineLayout GetPipelineLayoutTess() const {
+		return pipelineLayoutTess_;
+	}
 
 	void BeginFrame();
 	void EndFrame();
@@ -223,7 +226,9 @@ private:
 
 	// We use a single descriptor set layout for all PSP draws.
 	VkDescriptorSetLayout descriptorSetLayout_;
+	VkDescriptorSetLayout descriptorSetLayoutTess_;
 	VkPipelineLayout pipelineLayout_;
+	VkPipelineLayout pipelineLayoutTess_;
 	VulkanPipeline *lastPipeline_;
 	VkDescriptorSet lastDs_ = VK_NULL_HANDLE;
 
