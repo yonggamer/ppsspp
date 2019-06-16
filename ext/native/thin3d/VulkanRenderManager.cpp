@@ -20,6 +20,42 @@
 #define UINT64_MAX 0xFFFFFFFFFFFFFFFFULL
 #endif
 
+bool VKRGraphicsPipeline::Create(VulkanContext *vulkan) {
+	if (!desc) {
+		// Already failed to create this one.
+		return false;
+	}
+	VkResult result = vkCreateGraphicsPipelines(vulkan->GetDevice(), desc->pipelineCache, 1, &desc->pipe, nullptr, &pipeline);
+	delete desc;
+	desc = nullptr;
+	if (result == VK_INCOMPLETE) {
+		// Bad return value seen on Adreno in Burnout :(  Try to ignore?
+		// Create a placeholder to avoid creating over and over if something is broken.
+		pipeline = VK_NULL_HANDLE;
+		return true;
+	} else if (result != VK_SUCCESS) {
+		pipeline = VK_NULL_HANDLE;
+		ERROR_LOG(G3D, "Failed creating graphics pipeline! result='%s'", VulkanResultToString(result));
+		return false;
+	} else {
+		return true;
+	}
+}
+
+bool VKRComputePipeline::Create(VulkanContext *vulkan) {
+	if (!desc) {
+		// Already failed to create this one.
+		return false;
+	}
+	VkResult result = vkCreateComputePipelines(vulkan->GetDevice(), desc->pipelineCache, 1, &desc->pipe, nullptr, &pipeline);
+	delete desc;
+	desc = nullptr;
+	if (result != VK_SUCCESS) {
+		pipeline = VK_NULL_HANDLE;
+		return false;
+	}
+	return true;
+}
 
 void CreateImage(VulkanContext *vulkan, VkCommandBuffer cmd, VKRImage &img, int width, int height, VkFormat format, VkImageLayout initialLayout, bool color) {
 	VkImageCreateInfo ici{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
