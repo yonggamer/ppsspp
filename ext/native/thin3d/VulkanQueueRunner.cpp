@@ -1069,9 +1069,10 @@ void VulkanQueueRunner::PerformRenderPass(const VKRStep &step, VkCommandBuffer c
 		{
 			VKRGraphicsPipeline *pipeline = c.graphics_pipeline.pipeline;
 			if (!pipeline->pipeline) {
-				// Late! Compile it.
-				if (!pipeline->Create(vulkan_))
-					break;
+				// Stall processing, waiting for the compile queue to catch up.
+				// TODO: Switch to a cond_var here too.
+				while (!pipeline->pipeline)
+					sleep_ms(1);
 			}
 			if (pipeline->pipeline != lastGraphicsPipeline) {
 				vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
@@ -1088,9 +1089,10 @@ void VulkanQueueRunner::PerformRenderPass(const VKRStep &step, VkCommandBuffer c
 		{
 			VKRComputePipeline *pipeline = c.compute_pipeline.pipeline;
 			if (!pipeline->pipeline) {
-				// Late! Compile it.
-				if (!pipeline->Create(vulkan_))
-					break;
+				// Stall processing, waiting for the compile queue to catch up.
+				// TODO: Switch to a cond_var here too.
+				while (!pipeline->pipeline)
+					sleep_ms(1);
 			}
 			if (pipeline->pipeline != lastComputePipeline) {
 				vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline->pipeline);
