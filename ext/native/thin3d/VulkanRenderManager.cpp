@@ -392,6 +392,13 @@ void VulkanRenderManager::CompileThreadFunc() {
 	}
 }
 
+void VulkanRenderManager::DrainCompileQueue() {
+	std::unique_lock<std::mutex> lock(compileMutex_);
+	while (!compileQueue_.empty()) {
+		queueRunner_.WaitForCompileNotification();
+	}
+}
+
 void VulkanRenderManager::ThreadFunc() {
 	setCurrentThreadName("RenderMan");
 	int threadFrame = threadInitFrame_;

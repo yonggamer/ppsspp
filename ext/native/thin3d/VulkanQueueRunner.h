@@ -255,6 +255,11 @@ public:
 		compileDone_.notify_all();
 	}
 
+	void WaitForCompileNotification() {
+		std::unique_lock<std::mutex> lock(compileDoneMutex_);
+		compileDone_.wait(lock);
+	}
+
 private:
 	void InitBackbufferRenderPass();
 

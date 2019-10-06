@@ -155,6 +155,7 @@ public:
 
 	void ThreadFunc();
 	void CompileThreadFunc();
+	void DrainCompileQueue();
 
 	// Makes sure that the GPU has caught up enough that we can start writing buffers of this frame again.
 	void BeginFrame(bool enableProfiling);
