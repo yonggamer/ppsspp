@@ -1283,6 +1283,7 @@ void GLQueueRunner::PerformRenderPass(const GLRStep &step, bool first, bool last
 				glDisable(GL_DITHER);
 				ditherEnabled = false;
 			}
+#ifndef USING_GLES2
 			if (c.raster.depthClampEnable) {
 				if (!depthClampEnabled) {
 					glEnable(GL_DEPTH_CLAMP);
@@ -1292,6 +1293,7 @@ void GLQueueRunner::PerformRenderPass(const GLRStep &step, bool first, bool last
 				glDisable(GL_DEPTH_CLAMP);
 				depthClampEnabled = false;
 			}
+#endif
 			CHECK_GL_ERROR_IF_DEBUG();
 			break;
 		default:
@@ -1330,9 +1332,9 @@ void GLQueueRunner::PerformRenderPass(const GLRStep &step, bool first, bool last
 		glDisable(GL_BLEND);
 	if (cullEnabled)
 		glDisable(GL_CULL_FACE);
+#ifndef USING_GLES2
 	if (depthClampEnabled)
 		glDisable(GL_DEPTH_CLAMP);
-#ifndef USING_GLES2
 	if (!gl_extensions.IsGLES && logicEnabled) {
 		glDisable(GL_COLOR_LOGIC_OP);
 	}
