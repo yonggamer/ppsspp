@@ -179,20 +179,35 @@ public:
 	}
 
 	void SetScissor(VkRect2D rc) {
+		VkRect2D origRc = rc;
 		_dbg_assert_(curRenderStep_ && curRenderStep_->stepType == VKRStepType::RENDER);
 		_dbg_assert_((int)rc.extent.width >= 0);
 		_dbg_assert_((int)rc.extent.height >= 0);
 
+		_dbg_assert_(rc.extent.width < 10000000);
+
 		// Clamp to curWidth_/curHeight_. Apparently an issue.
 		if ((int)(rc.offset.x + rc.extent.width) > curWidth_) {
 			rc.extent.width = curWidth_ - rc.offset.x;
+			if ((int)rc.extent.width <= 0) {
+				// TODO: Probably shouldn't draw.
+				rc.extent.width = 1;
+				rc.offset.x = 0;
+			}
 		}
 		if ((int)(rc.offset.y + rc.extent.height) > curHeight_) {
 			rc.extent.height = curHeight_ - rc.offset.y;
+			if ((int)rc.extent.height <= 0) {
+				// TODO: Probably shouldn't draw.
+				rc.extent.height = 1;
+				rc.offset.y = 0;
+			}
 		}
 		_dbg_assert_((int)(rc.offset.x + rc.extent.width) <= curWidth_);
 		_dbg_assert_((int)(rc.offset.y + rc.extent.height) <= curHeight_);
 		curRenderArea_.Apply(rc);
+
+		_dbg_assert_(rc.extent.width < 10000000);
 
 		VkRenderData data{ VKRRenderCommand::SCISSOR };
 		data.scissor.scissor = rc;
