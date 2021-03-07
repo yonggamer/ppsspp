@@ -184,13 +184,11 @@ public:
 		_dbg_assert_((int)rc.extent.width >= 0);
 		_dbg_assert_((int)rc.extent.height >= 0);
 
-		_dbg_assert_(rc.extent.width < 10000000);
-
 		// Clamp to curWidth_/curHeight_. Apparently an issue.
 		if ((int)(rc.offset.x + rc.extent.width) > curWidth_) {
 			rc.extent.width = curWidth_ - rc.offset.x;
 			if ((int)rc.extent.width <= 0) {
-				// TODO: Probably shouldn't draw.
+				// TODO: Shouldn't draw at all.
 				rc.extent.width = 1;
 				rc.offset.x = 0;
 			}
@@ -198,7 +196,7 @@ public:
 		if ((int)(rc.offset.y + rc.extent.height) > curHeight_) {
 			rc.extent.height = curHeight_ - rc.offset.y;
 			if ((int)rc.extent.height <= 0) {
-				// TODO: Probably shouldn't draw.
+				// TODO: Shouldn't draw at all.
 				rc.extent.height = 1;
 				rc.offset.y = 0;
 			}

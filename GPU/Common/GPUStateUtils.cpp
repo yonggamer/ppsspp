@@ -599,6 +599,17 @@ void ConvertViewportAndScissor(bool useBufferedRendering, float renderWidth, flo
 		out.scissorH = (scissorY2 - scissorY1) * renderHeightFactor;
 	}
 
+	// We can't really do anything sensible if these checks trigger. We just cause problems
+	// downstream if we pass the values through.
+	// Until we support actually discarding draws, we restrict drawing to a single pixel.
+	if (out.scissorX > gstate_c.curRTWidth) {
+		out.scissorX = 0;
+		out.scissorW = 1;
+	}
+	if (out.scissorY > gstate_c.curRTHeight) {
+		out.scissorY = 0;
+		out.scissorH = 1;
+	}
 	int curRTWidth = gstate_c.curRTWidth;
 	int curRTHeight = gstate_c.curRTHeight;
 
